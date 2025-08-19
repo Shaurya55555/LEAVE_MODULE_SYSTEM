@@ -1,12 +1,20 @@
-import { Router } from "express";
-import { addEmployee, getLeaveBalance } from "../controllers/employeeController.js";
+// routes/employees.js
+import express from "express";
+import {
+  addEmployee,
+  getEmployees,
+  getLeaveBalance,
+} from "../controllers/employeeController.js";
 
-const router = Router();
+const router = express.Router();
 
-// POST /api/employees
+// Add a new employee
 router.post("/", addEmployee);
 
-// GET /api/employees/:id/leave-balance
+// Get all employees
+router.get("/", getEmployees);
+
+// Get leave balance for a specific employee
 router.get("/:id/leave-balance", getLeaveBalance);
 
 export default router;

@@ -1,34 +1,58 @@
+// controllers/employeeController.js
 import { Employee } from "../models/Employee.js";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { LeaveRequest } from "../models/LeaveRequest.js";
 
+// Add employee
+export const addEmployee = async (req, res) => {
+  try {
+    const employee = new Employee(req.body);
+    await employee.save();
+    res.status(201).json(employee);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
-// POST /api/employees
-export const addEmployee = asyncHandler(async (req, res) => {
-const { name, email, department, joiningDate, leaveBalance } = req.body;
-if (!name || !email || !department || !joiningDate) {
-res.status(400);
-throw new Error("name, email, department, joiningDate are required");
-}
+// Get all employees
+export const getEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    res.json(employees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
+// Get leave balance
+export const getLeaveBalance = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-const exists = await Employee.findOne({ email });
-if (exists) {
-res.status(409);
-throw new Error("Employee with this email already exists");
-}
+    const employee = await Employee.findById(id);
+    if (!employee) {
+      return res.status(404).json({ error: "Employee not found" });
+    }
 
+    const approvedLeaves = await LeaveRequest.find({
+      employeeId: id,
+      status: "APPROVED",
+    });
 
-const employee = await Employee.create({ name, email, department, joiningDate, leaveBalance });
-res.status(201).json(employee);
-});
+    const daysTaken = approvedLeaves.reduce(
+      (sum, leave) => sum + leave.daysRequested,
+      0
+    );
 
+    const totalLeaves = 30; // default annual quota
+    const remainingLeaves = Math.max(0, totalLeaves - daysTaken);
 
-// GET /api/employees/:id/leave-balance
-export const getLeaveBalance = asyncHandler(async (req, res) => {
-const emp = await Employee.findById(req.params.id);
-if (!emp) {
-res.status(404);
-throw new Error("Employee not found");
-}
-res.json({ employeeId: emp._id, leaveBalance: emp.leaveBalance });
-});
+    res.json({
+      employeeId: id,
+      totalLeaves,
+      usedLeaves: daysTaken,
+      remainingLeaves,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

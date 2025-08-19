@@ -3,7 +3,8 @@ import { applyLeave, updateLeaveStatus } from "../controllers/leaveController.js
 
 const router = Router();
 
-router.post("/", applyLeave);       // Apply for leave
-router.patch("/:id", updateLeaveStatus); // Approve/Reject leave
+router.post("/", applyLeave);
+router.post("/apply", applyLeave);
+router.post("/:id", updateLeaveStatus);
 
 export default router;
